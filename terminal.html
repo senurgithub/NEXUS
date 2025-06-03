@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Terminal | Cybernetic Command Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.6); }
+        }
+        
+        @keyframes neonGlow {
+            0%, 100% { text-shadow: 0 0 5px #00fffc, 0 0 10px #00fffc, 0 0 15px #00fffc; }
+            50% { text-shadow: 0 0 10px #00fffc, 0 0 20px #00fffc, 0 0 30px #00fffc; }
+        }
+        
+        @keyframes scanline {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes flicker {
+            0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
+            20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; }
+        }
+        
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* Animation classes */
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
+        
+        .pulse-glow {
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        
+        .neon-glow {
+            animation: neonGlow 2s ease-in-out infinite;
+        }
+        
+        .rotate-animation {
+            animation: rotate 20s linear infinite;
+        }
+        
+        .flicker-animation {
+            animation: flicker 10s linear infinite;
+        }
+        
+        .blinking-cursor {
+            animation: blink 1s step-end infinite;
+        }
+        
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+        .delay-4 { animation-delay: 0.8s; }
+        
+        /* Custom styles */
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(0, 20, 20, 0.3) 50%, 
+                transparent 100%);
+            pointer-events: none;
+            z-index: -1;
+            animation: scanline 8s linear infinite;
+        }
+        
+        .cyber-border {
+            position: relative;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .cyber-border::before, .cyber-border::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00fffc;
+            pointer-events: none;
+        }
+        
+        .cyber-border::before {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+        }
+        
+        .cyber-border::after {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+        }
+        
+        .cyber-card {
+            background: rgba(10, 10, 20, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cyber-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+        }
+        
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(0, 255, 255, 0.1),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        
+        .cyber-card:hover::before {
+            left: 100%;
+        }
+        
+        .cyber-button {
+            background: linear-gradient(45deg, #003333, #006666);
+            border: 1px solid #00fffc;
+            color: #00fffc;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cyber-button:hover {
+            background: linear-gradient(45deg, #006666, #009999);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            color: white;
+        }
+        
+        .cyber-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(0, 255, 255, 0.4),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        
+        .cyber-button:hover::before {
+            left: 100%;
+        }
+        
+        .neon-text {
+            color: #00fffc;
+            text-shadow: 0 0 5px #00fffc;
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(#00fffc, #009999);
+            border-radius: 4px;
+        }
+        
+        /* Particle effects */
+        .particle {
+            position: absolute;
+            background: rgba(0, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        /* Terminal styles */
+        .terminal {
+            background-color: rgba(0, 20, 20, 0.7);
+            border: 1px solid #00fffc;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            height: 100%;
+        }
+        
+        .terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to right, #003333, #006666);
+            border-bottom: 1px solid #00fffc;
+        }
+        
+        .terminal-header {
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            color: #00fffc;
+            font-weight: bold;
+        }
+        
+        .terminal-controls {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+        }
+        
+        .terminal-control {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        
+        .terminal-content {
+            padding: 40px 20px 20px;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+        }
+        
+        .command-line {
+            color: #00fffc;
+            margin-bottom: 10px;
+        }
+        
+        .command-line::before {
+            content: '> ';
+        }
+        
+        .command-output {
+            color: #00ff99;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+        
+        .command-error {
+            color: #ff5555;
+        }
+        
+        .command-success {
+            color: #00ff99;
+        }
+        
+        .command-info {
+            color: #00ccff;
+        }
+        
+        .command-warning {
+            color: #ffff55;
+        }
+        
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .input-line::before {
+            content: '> ';
+            color: #00fffc;
+        }
+        
+        #command-input {
+            background: transparent;
+            border: none;
+            color: #00fffc;
+            font-family: 'Courier New', monospace;
+            font-size: inherit;
+            flex-grow: 1;
+            outline: none;
+            caret-color: #00fffc;
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            width: 100%;
+            background-color: rgba(0, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: linear-gradient(to right, #00fffc, #00ff99);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Matrix rain effect */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="font-mono">
+    <!-- Matrix rain background -->
+    <canvas id="matrix-rain" class="matrix-rain"></canvas>
+    
+    <!-- Floating decorative elements -->
+    <div class="fixed top-1/4 left-1/4 w-32 h-32 rounded-full bg-cyan-500 bg-opacity-10 blur-3xl -z-10"></div>
+    <div class="fixed bottom-1/3 right-1/4 w-40 h-40 rounded-full bg-teal-500 bg-opacity-10 blur-3xl -z-10"></div>
+    <div class="fixed top-1/2 right-1/2 w-24 h-24 rounded-full bg-emerald-500 bg-opacity-10 blur-3xl -z-10"></div>
+    
+    <!-- Main terminal container -->
+    <div class="min-h-screen flex flex-col">
+        <!-- Navigation -->
+        <nav class="sticky top-0 z-50 bg-black bg-opacity-80 backdrop-blur-md border-b border-cyan-500 border-opacity-30">
+            <div class="max-w-7xl mx-auto px-6 py-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-600 to-emerald-600 flex items-center justify-center pulse-glow">
+                            <i class="fas fa-terminal text-white text-xl"></i>
+                        </div>
+                        <span class="text-2xl font-bold neon-text flicker-animation">NEXUS TERMINAL</span>
+                    </div>
+                    
+                    <div class="hidden lg:flex items-center space-x-10">
+                        <span class="text-gray-300">v3.7.2</span>
+                        <span class="text-cyan-400">CONNECTED</span>
+                        <span class="text-emerald-400">USER: ADMIN</span>
+                        <span class="text-purple-400">SECURITY: ENABLED</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="clear-terminal" class="px-5 py-2 rounded-lg text-gray-300 hover:text-cyan-400 transition hover:neon-glow">
+                            CLEAR
+                        </button>
+                        <button id="disconnect-btn" class="px-5 py-2 cyber-button pulse-glow">
+                            DISCONNECT
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Terminal interface -->
+        <main class="flex-grow flex flex-col max-w-7xl mx-auto w-full px-6 py-8">
+            <div class="cyber-card rounded-xl overflow-hidden flex-grow">
+                <div class="terminal h-full">
+                    <div class="terminal-header">NEXUS TERMINAL v3.7.2</div>
+                    <div class="terminal-controls">
+                        <div class="terminal-control bg-red-500"></div>
+                        <div class="terminal-control bg-yellow-500"></div>
+                        <div class="terminal-control bg-green-500"></div>
+                    </div>
+                    <div class="terminal-content" id="terminal-output">
+                        <div class="command-line">system status --all</div>
+                        <div class="command-output">
+                            <div>> NEXUS CORE: <span class="command-success">ONLINE</span></div>
+                            <div>> NEURAL NETWORK: <span class="command-success">SYNCED</span></div>
+                            <div>> QUANTUM LINK: <span class="command-warning">ESTABLISHING</span></div>
+                            <div>> DATA STREAM: <span class="command-success">ACTIVE</span></div>
+                            <div>> SECURITY PROTOCOLS: <span class="command-success">ENABLED</span></div>
+                        </div>
+                        <div class="command-line">connect --user admin</div>
+                        <div class="command-output">
+                            <div>> WELCOME TO NEXUS TERMINAL INTERFACE</div>
+                            <div>> DOWNLOADING INTERFACE...</div>
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                            <div>> SYSTEM READY</div>
+                        </div>
+                        <div class="command-line">help</div>
+                        <div class="command-output">
+                            <div>> AVAILABLE COMMANDS:</div>
+                            <div>>   help - Display this help message</div>
+                            <div>>   clear - Clear terminal screen</div>
+                            <div>>   system - Show system information</div>
+                            <div>>   modules - List available modules</div>
+                            <div>>   neural - Neural interface controls</div>
+                            <div>>   cyberlimb - Cybernetic limb controls</div>
+                            <div>>   visual - Visual enhancement controls</div>
+                            <div>>   security - Security protocols</div>
+                            <div>>   connect - Establish new connection</div>
+                            <div>>   disconnect - Terminate session</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Command input -->
+            <div class="mt-4 cyber-card rounded-lg p-4">
+                <div class="input-line">
+                    <input type="text" id="command-input" placeholder="Enter command..." autocomplete="off" autofocus>
+                </div>
+            </div>
+            
+            <!-- Quick command buttons -->
+            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button class="cyber-button py-2 px-4 text-sm" onclick="runCommand('system status')">
+                    <i class="fas fa-microchip mr-2"></i> SYSTEM
+                </button>
+                <button class="cyber-button py-2 px-4 text-sm" onclick="runCommand('neural scan')">
+                    <i class="fas fa-brain mr-2"></i> NEURAL
+                </button>
+                <button class="cyber-button py-2 px-4 text-sm" onclick="runCommand('visual enhance')">
+                    <i class="fas fa-eye mr-2"></i> VISUAL
+                </button>
+                <button class="cyber-button py-2 px-4 text-sm" onclick="runCommand('security protocols')">
+                    <i class="fas fa-shield-alt mr-2"></i> SECURITY
+                </button>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-black bg-opacity-80 py-4 border-t border-cyan-500 border-opacity-20">
+            <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+                <div class="text-gray-400 text-sm">
+                    <span class="mr-4">SESSION ID: NX-<span id="session-id">A7F3B92C</span></span>
+                    <span>UPTIME: <span id="uptime">00:12:47</span></span>
+                </div>
+                <div class="text-gray-400 text-sm">
+                    <span class="mr-4">CPU: <span class="text-emerald-400">34%</span></span>
+                    <span>MEM: <span class="text-cyan-400">62%</span></span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Matrix rain background
+        const canvas = document.getElementById('matrix-rain');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        const symbols = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
+        
+        const alphabet = katakana + latin + nums + symbols;
+        
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        
+        const rainDrops = [];
+        
+        for (let x = 0; x < columns; x++) {
+            rainDrops[x] = 1;
+        }
+        
+        const draw = () => {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#00fffc';
+            ctx.font = fontSize + 'px monospace';
+            
+            for (let i = 0; i < rainDrops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+                
+                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            }
+        };
+        
+        setInterval(draw, 30);
+        
+        // Terminal functionality
+        const terminalOutput = document.getElementById('terminal-output');
+        const commandInput = document.getElementById('command-input');
+        const clearBtn = document.getElementById('clear-terminal');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        
+        // Command history
+        let commandHistory = [];
+        let historyIndex = -1;
+        
+        // Available commands and responses
+        const commands = {
+            'help': {
+                output: `> AVAILABLE COMMANDS:
+>   help - Display this help message
+>   clear - Clear terminal screen
+>   system - Show system information
+>   modules - List available modules
+>   neural - Neural interface controls
+>   cyberlimb - Cybernetic limb controls
+>   visual - Visual enhancement controls
+>   security - Security protocols
+>   connect - Establish new connection
+>   disconnect - Terminate session`
+            },
+            'system': {
+                output: `> SYSTEM INFORMATION:
+>   OS: NexusOS v3.7.2
+>   Architecture: Quantum-Neural Hybrid
+>   CPU: 12th Gen Cybertronic Q-Core
+>   GPU: NeuroVisual 9000
+>   RAM: 128TB DDR6
+>   Storage: 10PB Quantum SSD
+>   Uptime: 12 days, 7 hours, 23 minutes`
+            },
+            'system status': {
+                output: `> SYSTEM STATUS:
+>   NEXUS CORE: <span class="command-success">ONLINE</span>
+>   NEURAL NETWORK: <span class="command-success">SYNCED</span>
+>   QUANTUM LINK: <span class="command-success">STABLE</span>
+>   DATA STREAM: <span class="command-success">ACTIVE</span>
+>   SECURITY PROTOCOLS: <span class="command-success">ENABLED</span>
+>   POWER: <span class="command-success">98%</span>
+>   TEMPERATURE: <span class="command-success">32°C</span>`
+            },
+            'modules': {
+                output: `> AVAILABLE MODULES:
+>   neural_boost - Cognitive enhancement suite
+>   visual_overlay - AR interface package
+>   cyberlimb_mk4 - Prosthetic control system
+>   quantum_encrypt - Security protocols
+>   data_stream - Information processing
+>   nano_defense - Threat protection`
+            },
+            'neural': {
+                output: `> NEURAL INTERFACE CONTROLS:
+>   neural scan - Run diagnostic scan
+>   neural boost [level] - Set enhancement level (1-10)
+>   neural reset - Reset neural connection
+>   neural sync - Synchronize with network`
+            },
+            'neural scan': {
+                output: `> INITIATING NEURAL SCAN...
+>   Scanning cerebral cortex... <span class="command-success">DONE</span>
+>   Mapping neural pathways... <span class="command-success">DONE</span>
+>   Analyzing synaptic connections... <span class="command-success">DONE</span>
+>   Checking quantum entanglement... <span class="command-success">DONE</span>
+> 
+> SCAN COMPLETE:
+>   Neural integrity: <span class="command-success">98%</span>
+>   Synaptic latency: <span class="command-success">2ms</span>
+>   Memory capacity: <span class="command-success">87%</span>
+>   Quantum sync: <span class="command-success">ESTABLISHED</span>`
+            },
+            'visual': {
+                output: `> VISUAL ENHANCEMENT CONTROLS:
+>   visual enhance [mode] - Activate enhancement mode
+>   visual overlay [on/off] - Toggle data overlay
+>   visual zoom [level] - Set zoom level (1-20x)
+>   visual spectrum [mode] - Change spectrum (normal/thermal/night)`
+            },
+            'visual enhance': {
+                output: `> ACTIVATING VISUAL ENHANCEMENT...
+>   Initializing optical nerves... <span class="command-success">DONE</span>
+>   Loading AR interface... <span class="command-success">DONE</span>
+>   Calibrating focus... <span class="command-success">DONE</span>
+>   Syncing with neural net... <span class="command-success">DONE</span>
+> 
+> ENHANCEMENT ACTIVE:
+>   Resolution: <span class="command-success">8K @ 240Hz</span>
+>   Zoom: <span class="command-success">5x</span>
+>   Spectrum: <span class="command-success">Full</span>
+>   Overlay: <span class="command-success">Basic</span>`
+            },
+            'cyberlimb': {
+                output: `> CYBERLIMB CONTROLS:
+>   cyberlimb status - Check limb status
+>   cyberlimb calibrate - Run calibration
+>   cyberlimb strength [level] - Set strength (1-10)
+>   cyberlimb mode [mode] - Set operation mode`
+            },
+            'security': {
+                output: `> SECURITY PROTOCOLS:
+>   security scan - Run threat detection
+>   security encrypt [level] - Set encryption (1-5)
+>   security firewall [on/off] - Toggle firewall
+>   security lockdown - Activate emergency lockdown`
+            },
+            'security protocols': {
+                output: `> CURRENT SECURITY STATUS:
+>   Firewall: <span class="command-success">ACTIVE</span>
+>   Encryption: <span class="command-success">Level 4</span>
+>   Threat detection: <span class="command-success">ONLINE</span>
+>   Last scan: <span class="command-success">2 minutes ago</span>
+>   Intrusions blocked: <span class="command-success">17 today</span>`
+            },
+            'connect': {
+                output: `> ALREADY CONNECTED TO NEXUS NETWORK
+> Use 'disconnect' to terminate current session`
+            },
+            'disconnect': {
+                output: `> TERMINATING SESSION...
+>   Closing neural connection... <span class="command-success">DONE</span>
+>   Encrypting data stream... <span class="command-success">DONE</span>
+>   Disengaging quantum link... <span class="command-success">DONE</span>
+> 
+> SESSION TERMINATED
+> You have been disconnected from Nexus Network`,
+                action: () => {
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                }
+            },
+            'clear': {
+                output: '',
+                action: () => {
+                    terminalOutput.innerHTML = '';
+                }
+            }
+        };
+        
+        // Default response for unknown commands
+        const unknownCommand = (cmd) => {
+            return `> Command "${cmd}" not recognized. Type "help" for available commands.`;
+        };
+        
+        // Run a command
+        function runCommand(command) {
+            if (!command) return;
+            
+            // Add to history
+            commandHistory.push(command);
+            historyIndex = commandHistory.length;
+            
+            // Display the command
+            const commandLine = document.createElement('div');
+            commandLine.className = 'command-line';
+            commandLine.textContent = command;
+            terminalOutput.appendChild(commandLine);
+            
+            // Process the command
+            let response;
+            const cmd = command.toLowerCase().split(' ')[0];
+            
+            if (commands[cmd]) {
+                response = commands[cmd].output;
+                
+                // Create output element
+                const output = document.createElement('div');
+                output.className = 'command-output';
+                output.innerHTML = response;
+                terminalOutput.appendChild(output);
+                
+                // Execute any associated action
+                if (commands[cmd].action) {
+                    commands[cmd].action();
+                }
+            } else {
+                // Unknown command
+                const output = document.createElement('div');
+                output.className = 'command-output command-error';
+                output.textContent = unknownCommand(command);
+                terminalOutput.appendChild(output);
+            }
+            
+            // Scroll to bottom
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            
+            // Clear input
+            commandInput.value = '';
+        }
+        
+        // Event listeners
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                runCommand(commandInput.value);
+            } else if (e.key === 'ArrowUp') {
+                // Command history navigation
+                if (commandHistory.length > 0 && historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                if (commandHistory.length > 0 && historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+                e.preventDefault();
+            }
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            runCommand('clear');
+        });
+        
+        disconnectBtn.addEventListener('click', () => {
+            runCommand('disconnect');
+        });
+        
+        // Quick command buttons
+        window.runCommand = runCommand;
+        
+        // Uptime counter
+        function updateUptime() {
+            const uptimeElement = document.getElementById('uptime');
+            let seconds = 0;
+            
+            setInterval(() => {
+                seconds++;
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                
+                uptimeElement.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        // Random session ID
+        function generateSessionId() {
+            const chars = '0123456789ABCDEF';
+            let id = '';
+            for (let i = 0; i < 8; i++) {
+                id += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('session-id').textContent = id;
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            updateUptime();
+            generateSessionId();
+            commandInput.focus();
+            
+            // Add some initial commands
+            setTimeout(() => {
+                runCommand('system status');
+            }, 500);
+        });
+        
+        // Resize canvas when window resizes
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
